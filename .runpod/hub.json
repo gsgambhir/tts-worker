@@ -1,0 +1,44 @@
+{
+  "title": "TTS Multi-Engine Worker",
+  "description": "Text-to-speech with Kokoro (54 voices, 9 languages), Dia (multi-speaker dialogue), and F5-TTS (zero-shot voice cloning). OpenAI-compatible API.",
+  "category": "audio",
+  "env": [
+    {
+      "key": "TTS_ENGINE",
+      "label": "TTS Engine",
+      "description": "Which TTS engine to load: kokoro, dia, or f5",
+      "required": true,
+      "default": "kokoro",
+      "type": "string"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Kokoro — Fast Multi-Voice TTS",
+      "description": "82M param model. 54 voices across 9 languages. 36-96x realtime on GPU. Apache 2.0 license.",
+      "env": {
+        "TTS_ENGINE": "kokoro"
+      },
+      "gpu": "NVIDIA T4",
+      "volume_size": 5
+    },
+    {
+      "name": "Dia — Dialogue & Non-Verbal TTS",
+      "description": "1.6B param model by Nari Labs. Multi-speaker dialogue with [S1]/[S2] tags. Supports laughs, sighs, and other non-verbal sounds.",
+      "env": {
+        "TTS_ENGINE": "dia"
+      },
+      "gpu": "NVIDIA RTX A4000",
+      "volume_size": 10
+    },
+    {
+      "name": "F5-TTS — Zero-Shot Voice Cloning",
+      "description": "300M param diffusion model. Clone any voice from a 5-15 second audio sample. Supports English and Chinese.",
+      "env": {
+        "TTS_ENGINE": "f5"
+      },
+      "gpu": "NVIDIA RTX A4000",
+      "volume_size": 20
+    }
+  ]
+}

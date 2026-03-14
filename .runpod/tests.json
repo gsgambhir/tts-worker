@@ -1,0 +1,33 @@
+{
+  "tests": [
+    {
+      "name": "Basic TTS generation",
+      "input": {
+        "input": "Hello, this is a test of the text to speech system.",
+        "voice": "af_heart",
+        "response_format": "wav"
+      },
+      "expected_status": 200,
+      "timeout": 30
+    },
+    {
+      "name": "List available voices",
+      "input": {
+        "action": "list_voices"
+      },
+      "expected_status": 200,
+      "timeout": 10
+    },
+    {
+      "name": "TTS with speed adjustment",
+      "input": {
+        "input": "Speaking a bit faster now.",
+        "voice": "af_bella",
+        "speed": 1.2,
+        "response_format": "wav"
+      },
+      "expected_status": 200,
+      "timeout": 30
+    }
+  ]
+}
