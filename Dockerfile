@@ -1,40 +1,34 @@
 # =============================================================================
-# TTS Worker — Kokoro, Dia, F5-TTS on RunPod Serverless
+# Piper TTS — CPU-only RunPod Serverless worker
+# Small (~300 MB), no GPU. Uses the official Linux x86_64 Piper binary
+# (the Linux build ships its shared libs intact, unlike the macOS build).
 # =============================================================================
-FROM nvidia/cuda:12.6.3-runtime-ubuntu24.04
+FROM python:3.11-slim
 
-# System dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip python3-venv python3-dev \
-    espeak-ng ffmpeg libsndfile1 git \
-    && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/python3 /usr/bin/python
+    wget ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install PyTorch with CUDA 12.6 first (pinned for Dia compatibility)
-RUN pip install --no-cache-dir --break-system-packages \
-    torch==2.6.0 torchaudio==2.6.0 \
-    --index-url https://download.pytorch.org/whl/cu126
+# Piper Linux binary (bundles libonnxruntime, libespeak-ng, libpiper_phonemize)
+RUN wget -q https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_x86_64.tar.gz \
+    && tar xzf piper_linux_x86_64.tar.gz \
+    && rm piper_linux_x86_64.tar.gz
 
-# Install TTS engines
-RUN pip install --no-cache-dir --break-system-packages \
-    kokoro>=0.9.4 \
-    f5-tts \
-    && pip install --no-cache-dir --break-system-packages \
-    git+https://github.com/nari-labs/dia.git
+# en-US voice baked into the image (no runtime download -> fast cold start)
+RUN mkdir -p voices \
+    && wget -q -O voices/en_US-lessac-medium.onnx \
+       "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx?download=true" \
+    && wget -q -O voices/en_US-lessac-medium.onnx.json \
+       "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json?download=true"
 
-# Install RunPod SDK and utilities
-RUN pip install --no-cache-dir --break-system-packages \
-    runpod>=1.7.0 soundfile numpy requests
+RUN pip install --no-cache-dir runpod
 
-# Copy application code
-COPY engines/ engines/
 COPY handler.py .
 
 ENV PYTHONUNBUFFERED=1
+ENV PIPER_BIN=/app/piper/piper
+ENV PIPER_VOICE=/app/voices/en_US-lessac-medium.onnx
 
-# Default: Kokoro (lightest, fastest). Override with TTS_ENGINE=dia or TTS_ENGINE=f5
-ENV TTS_ENGINE="kokoro"
-
-CMD ["python3", "-u", "handler.py"]
+CMD ["python", "-u", "handler.py"]
